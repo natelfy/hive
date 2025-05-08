@@ -1,0 +1,337 @@
+@startuml
+
+enum InputType {
+        PAUSE,
+        UNDO,
+        SINGLE_NUMERIC,
+        TUPLE_NUMERIC,
+        STRING,
+        UNKNOWN,
+        CONTINUE
+    }
+
+class HiveException {
+    + HiveException(i : const string&)
+    + getInfo() : string
+    - info : string
+    }
+
+class InputResult {
+    - type : InputType
+    - tupleValue : tuple<int, int>
+    - singleValue : int
+    + InputResult() = default
+    + InputResult(tuple : tuple<int, int> )
+    + InputResult(value : int)
+    + InputResult(TYPE : InputType)
+    + getType() : InputType
+    + getTupleValue() : tuple<int, int>
+    + getSingleValue() : int
+    }
+
+class Menu {
+    - mosquitoExtension : bool = true
+    - ladybugExtension : bool = true
+    - pillbugExtension : bool = false
+    - gameInstance : Game*
+    - menuInstance : static Menu*
+    - selected_mode : GameMode = _2_humans
+    - selected_ai1level : AiLevel
+    - selected_ai2level : AiLevel
+
+    - Menu() : Menu
+    - ~Menu() : void
+    - askAndToggleExtensions() : void
+    - toggleExtensionMosquito() : void
+    - toggleExtensionLadybug() : void
+    - askAndSetGameMode() : void
+    - playNewGame() : void
+    - resumeGame() : void
+    - endGame() : void
+    - displaySettings() : void
+
+    + Menu(const Menu&) = delete : Menu
+    + operator=(const Menu&) = delete : void
+    + getMenu() : static Menu&
+    + deleteMenu() : static void
+    + terminalInterface() : void
+    + getInput() : static InputResult
+}
+
+
+class Game {
+    - counter : int
+    - gameMode : GameMode
+    - ai1Level : AiLevel
+    - ai2Level : AiLevel
+    - numberOfReturns : unsigned int
+    - numberOfReturnsLeft : unsigned int
+    - Game(mode : GameMode ,ai1 :  AiLevel , ai2 :  AiLevel , returnsLeft : unsigned int , mosquito : bool, ladybug : bool, pillbug : bool)
+    - ~Game()
+    - mosquitoExtension : const bool
+    - ladybugExtension : const bool
+    - pillbugExtension : const bool
+    - ended : bool
+    - board : Board*
+    - player1 : Player*
+    - player2 : Player*
+    - winner : Player*
+    - lastMoves : stack<Move>
+    - instance : static Game*
+    - handleUserInput() : static InputResult
+    - playTurn( player : Player*) : bool
+    - printBoard() : void
+
+
+    + Game(const Game&) = delete
+    + operator=(const Game&) = delete
+    + getGame(mode: GameMode, ai1: AiLevel, ai2: AiLevel, returns: unsigned int, b: Board*, mosquito: bool, ladybug: bool, pillbug: bool) : static Game&
+    + endGame() : void
+    + checkWinCondition() : bool
+    + gameLoop() : Player*
+    + undoMove() : void
+}
+
+enum GameMode {
+    _0_human
+    _1_human
+    _2_humans
+}
+
+enum AiLevel {
+    easy
+    medium
+    hard
+}
+
+enum Color {
+    blue
+    green
+}
+
+class Board {
+    - grid : Piece**
+    - instance : static *Board
+    - sizeMax : const size_t
+    - Board() = default : Board
+    - ~Board() = default : void
+    - repeat(c : char, n : size_t) : const string
+    - repeatSpace(n : size_t) : const string
+    + Board(const Board&) = delete : Board
+    + operator=(const Board&) = delete : void
+    + getBoard() : static Board&
+    + addPiece(piece: Piece, position: tuple[int, int]) : void
+    + movePiece(piece: Piece, position: tuple[int, int]) : void
+    + removePiece(piece: Piece) : void
+    + neighboursSlots(position: tuple[int, int]) : vector<tuple<int, int>>
+    + neighboursPieces(position: tuple[int, int]) : vector<Piece*>
+    + iterator() : Board::Iterator
+    + getSizeMax() : size_t
+    + NextFreeSlotLine(position: tuple[int, int]) : vector<tuple<int, int>>
+    + freeContiguousSlots(position: tuple[int, int]) : vector<tuple<int, int>>
+    + toString(pos: vector<tuple<int, int>>) : string
+    + checkFullConnectivity(x: int, y: int, visited: vector<tuple<int, int>>, remainingPieces: vector<tuple<int, int>>) : bool
+    + keepsHiveTogether(piece: Piece) : bool
+    + freeSlotsToAddPiece(color : Color,counter : int) : vector<tuple<int,int>>
+    + convertToTuple(coord : const string&) : tuple<int, int>
+    + convertToString(coord : const tuple<int, int>&) : string
+    + isEmpty() : bool
+}
+
+class Board::Iterator {
+    - row : unsigned int
+    - col : unsigned int
+    - board : Board*
+    + Iterator(b : const Board&)
+    + hasNext() : bool
+    + next() : void
+    + current() : Piece*
+}
+
+class Piece {
+    - isPlaced : bool
+    - bettleOnTop : bool
+    - mosquitoOnTop : bool
+    - position : tuple<int, int>
+    - color : Color
+    - description : string
+    - code : string
+    + Piece(color : Color, code : string, description : string)
+    + getBeetleOnTop() : bool
+    + getMosquitoOnTop() : bool
+    + setBeetleOnTop(b : bool) : void
+    + setMosquitoOnTop(b : bool) : void
+    + getIsPlaced() : bool
+    + setIsPlaced(b: bool) : void
+    + canMove() : bool
+    + getCode() : string
+    + getColor() : Color
+    + getDescription() : string
+    + colorToString() : string
+    + getPosition() : tuple<int, int>
+    + setPosition(position: tuple<int, int>) : void
+    + virtual ~Piece()
+    + neighbours(position: tuple<int, int>) : vector<Piece*>
+    + validitySlot(positionDestination: tuple<int, int>) : bool
+    + legalMoves(counter : int, canMoveOverride : bool) : vector<tuple<int, int>>
+    + toStringForBoard() : string
+}
+
+class QueenBee {
+    + QueenBee(color : Color, description : const string)
+    + legalMoves(counter : int, canMoveOverride : bool) : vector<tuple<int, int>>
+}
+
+class Beetle {
+    + hiddenPiece : Piece*
+    + Beetle(color : Color, description : const string)
+    + legalMoves(counter : int, canMoveOverride : bool) : vector<tuple<int, int>>
+}
+
+class Grasshopper {
+    + Grasshopper(color : Color, description : const string)
+    + legalMoves(counter : int, canMoveOverride : bool) : vector<tuple<int, int>>
+}
+
+class Spider {
+    + Spider(color : Color, description : const string)
+    + findPath(originPosition : tuple<int, int> , visited : vector<tuple<int, int>>&, legals : vector <tuple<int, int>>&, targetDepth : int) : void
+    + legalMoves(counter : int, canMoveOverride : bool) : vector<tuple<int, int>>
+}
+
+class SoldierAnt {
+    + SoldierAnt(color : Color, description : const string)
+    + findPath(originPosition : tuple<int, int> , legals : vector <tuple<int, int>>&)
+    + legalMoves(counter : int, canMoveOverride : bool) : vector<tuple<int, int>>
+}
+
+class Mosquito {
+    + hiddenPiece : Piece*
+    + Mosquito(color : Color, description : const string)
+    + legalMoves(counter : int, canMoveOverride : bool) : vector<tuple<int, int>>
+}
+
+class Ladybug {
+    + findPath(originPosition : tuple<int, int>, legals : vector <tuple<int, int>>&, targetDepth : int) : void
+    + Ladybug(color : Color, description : const string)
+    + legalMoves(counter : int, canMoveOverride : bool) : vector<tuple<int, int>>
+}
+
+class Pillbug {
+    + Pillbug(color : Color, description : const string)
+    + legalMoves(counter : int, canMoveOverride : bool) : vector<tuple<int, int>>
+}
+
+class PieceSet {
+    - namePlayer : const string
+    - color : Color
+    - totalNbPiece : int
+    - pieces : map<string, unique_ptr<Piece>>
+    - queenBee : Piece*
+    + repeat(c : char, n : size_t) : const string
+    + repeatSpace(n : size_t) : const string
+
+    + toString() :  const string
+    + getTotalNbPiece() : const int
+    + PieceSet(name : string, color: Color, extensionMosquito: bool, extensionLadyBug: bool, extensionPillbug: bool) : PieceSet
+    + getQueenBee() : const Piece*
+    + getIterator() : PieceSet::Iterator
+}
+
+class PieceSet::Iterator {
+    - parent : PieceSet&
+    - i : map<string, unique_ptr<Piece>>::iterator
+    + isDone() : bool
+    + Iterator(ps PieceSet& )
+    + hasNext() : bool
+    + next() : void
+    + currentItem() : Piece*
+}
+
+class Player {
+    # name : const string
+    # color : Color
+    # pieceSet : PieceSet*
+    # virtual ~Player()
+
+    + getName() : string
+    + play(counter : int) : Move
+    + virtual getMove(counter : int) : Move
+    + Player(name : string, extensionMosquito : bool, extensionLadyBug : bool , extensionPillbug : bool, color : Color)
+}
+
+class Human {
+    + Human(name : string, extensionMosquito : bool, extensionLadyBug : bool, extensionPillbug : bool, color : Color)
+    + getMove(int compteur) Move
+}
+
+class Ai {
+    - aiStrategy : AiStrategy*
+    - level : AiLevel
+    + Ai(name : string, extensionMosquito : bool, extensionLadyBug : bool, extensionPillbug : bool, level : AiLevel, color : Color)
+    + ~Ai()
+    + getMove(counter : int) : Move
+}
+
+class AiStrategy {
+    - ai : Player*
+    + getAi() : Player*
+    + pieceSet : PieceSet *
+    + AiStrategy(pieceSet : PieceSet*, ai : Player*)
+    + virtual ~AiStrategy()
+    + virtual generateMove(counter : int) : Move
+}
+
+class AiStrategyEasy {
+    + AiStrategyEasy(pieceSet : PieceSet*, ai : Player*)
+    + generateMove(counter : int) : Move
+
+}
+
+class AiStrategyMedium {
+    + generateMove() : Move
+}
+
+class AiStrategyHard {
+    + generateMove() : Move
+}
+
+class Move {
+    - piece : Piece*
+    - player : Player*
+    - pieceSetOrigin : PieceSet*
+    - piecePositionOrigin : tuple<int, int>
+    - destination : tuple<int, int>
+    + doMove() : void
+    + undoMove() : void
+    + Move(piece : Piece*, player : Player* , origin : PieceSet* , destination : tuple <int, int>)
+    + Move()
+}
+
+Game "1" *- "1" Board : "is relative to"
+Game "1" -* "1" Menu : "created and saved by"
+Game "1" *- "2" Player : "participates"
+Board "1" o- "0..*" Piece : "contains"
+Piece "*" --* "1" PieceSet : "belongs to"
+PieceSet "1" --* "1" Player : "belongs to"
+Move "*" -- "1" Player : "is made by"
+Move "*" --o "1" Game : "is saved by"
+PieceSet::Iterator "1" --* "1" PieceSet : "used for iteration over"
+Ai "1" *-- "1" AiStrategy : "uses"
+Piece "1" -- "*" Move : "concerns"
+Board::Iterator "1" --* "1" Board : "used for iteration over"
+AiStrategy <|-- AiStrategyEasy
+AiStrategy <|-- AiStrategyMedium
+AiStrategy <|-- AiStrategyHard
+Player <|-- Human
+Player <|-- Ai
+Piece <|-- QueenBee
+Piece <|-- Beetle
+Piece <|-- Grasshopper
+Piece <|-- Spider
+Piece <|-- SoldierAnt
+Piece <|-- Mosquito
+Piece <|-- Pillbug
+Piece <|-- Ladybug
+
+@enduml
